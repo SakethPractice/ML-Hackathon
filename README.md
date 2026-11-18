@@ -126,7 +126,21 @@ git clone https://github.com/SakethPractice/ML-Hackathon.git
 cd ML-Hackathon
 ```
 
-> Full setup, training and API/UI commands will be added after the team's modules and dependencies are integrated. Do not assume the current repository is already runnable end-to-end.
+Install and run the feature workflow:
+
+```bash
+python -m pip install -e .
+python scripts/run_feature_analysis.py
+python scripts/run_feature_selection.py
+python scripts/run_feature_validation.py
+python -m pytest tests/ -v
+```
+
+The workflow uses only `data/processed/train` for feature selection and
+cross-validation. Student-testing trips are not used to select features.
+Five-fold `GroupKFold` keeps every candidate row from a trip in the same fold.
+The generated outputs are written to `results/` and `results/figures/`;
+the reproducible selected subset is in `results/selected_features.json`.
 
 ## 📊 Evaluation goals
 

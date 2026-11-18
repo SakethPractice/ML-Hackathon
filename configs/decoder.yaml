@@ -1,7 +1,21 @@
-emission_temperature: 1.0
-transition_connected_penalty: 0.0
-transition_disconnected_penalty: -12.0
-long_gap_seconds: 60
-long_gap_penalty: -4.0
-distance_penalty_scale: 0.001
-
+# Decoder configuration. Tune ONLY with training-trip CV (and student-testing for permitted
+# development evaluation). Never tune on the reserved evaluator partition.
+emission:
+  mode: normalised          # normalised | logit_normalised | raw_log
+  epsilon: 1.0e-6
+  temperature: 1.0          # used by logit_normalised
+transition:
+  beta_m: 30.0              # scale of |network distance - GPS displacement| penalty (metres)
+  max_speed_mps: 45.0       # hard limit on implied speed
+  soft_speed_mps: 30.0      # soft penalty above this speed
+  speed_penalty_weight: 1.0
+  speed_slack_m: 100.0
+  backward_tolerance_m: 5.0 # GPS-noise tolerance for same-arc backward projection
+  max_search_distance_m: 5000.0
+gaps:
+  max_gap_seconds: 120.0    # larger gaps split the trajectory
+  missing_candidate_policy: bridge    # bridge | split
+  max_bridged_observations: 1000000
+reconstruction:
+  insert_intermediate: true
+  max_intermediate_arcs: 500

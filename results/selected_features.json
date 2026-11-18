@@ -1,0 +1,20 @@
+{
+  "selected_features": [
+    "candidate_rank",
+    "heading_difference_deg",
+    "distance_to_segment_m",
+    "segment_length_m",
+    "segment_bearing_deg",
+    "gps_heading_deg",
+    "gps_displacement_m",
+    "implied_speed_mps",
+    "from_node_degree",
+    "to_node_degree",
+    "from_node_out_degree",
+    "time_delta_s",
+    "to_node_out_degree"
+  ],
+  "method": "union of training-fold RF, LightGBM and permutation top rankings",
+  "seed": 42,
+  "note": "Choose E8 from cross-validation; this file is a reproducible candidate subset."
+}
