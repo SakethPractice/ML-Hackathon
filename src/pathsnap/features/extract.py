@@ -244,53 +244,41 @@ def calculate_gps_features(gps_observations):
 
     gps = gps_observations.copy()
 
-    gps = gps.sort_values(
-        "observation_id"
-    ).reset_index(drop=True)
+    gps = gps.copy()
+    if "segment_id" in gps.columns:
+        gps = gps.sort_values(["segment_id", "observation_id"]).reset_index(drop=True)
+    else:
+        gps = gps.sort_values("observation_id").reset_index(drop=True)
 
-    gps["previous_longitude"] = gps["longitude"].shift(1)
-    gps["previous_latitude"] = gps["latitude"].shift(1)
+    if {"dt_prev_s", "step_prev_m", "heading_deg", "speed_prev_mps"}.issubset(gps.columns):
+        gps["time_delta_s"] = pd.to_numeric(gps["dt_prev_s"], errors="coerce")
+        gps["gps_displacement_m"] = pd.to_numeric(gps["step_prev_m"], errors="coerce")
+        gps["gps_heading_deg"] = pd.to_numeric(gps["heading_deg"], errors="coerce")
+        gps["implied_speed_mps"] = pd.to_numeric(gps["speed_prev_mps"], errors="coerce")
+    else:
+        gps["previous_longitude"] = gps["longitude"].shift(1)
+        gps["previous_latitude"] = gps["latitude"].shift(1)
+        gps["previous_timestamp"] = gps["timestamp"].shift(1)
+        gps["time_delta_s"] = gps["timestamp"] - gps["previous_timestamp"]
+        gps["gps_displacement_m"] = haversine_distance(
+            gps["previous_longitude"], gps["previous_latitude"],
+            gps["longitude"], gps["latitude"]
+        )
+        gps["gps_heading_deg"] = calculate_bearing(
+            gps["previous_longitude"], gps["previous_latitude"],
+            gps["longitude"], gps["latitude"]
+        )
 
-    gps["previous_timestamp"] = gps["timestamp"].shift(1)
+        if "segment_id" in gps.columns:
+            segment_changed = gps["segment_id"].ne(gps["segment_id"].shift(1))
+            gps.loc[segment_changed, ["time_delta_s", "gps_displacement_m", "gps_heading_deg"]] = np.nan
+        else:
+            gps.loc[0, ["time_delta_s", "gps_displacement_m", "gps_heading_deg"]] = np.nan
 
-    gps["time_delta_s"] = (
-        gps["timestamp"] - gps["previous_timestamp"]
-    )
-
-    gps["gps_displacement_m"] = haversine_distance(
-        gps["previous_longitude"],
-        gps["previous_latitude"],
-        gps["longitude"],
-        gps["latitude"]
-    )
-
-    gps["gps_heading_deg"] = calculate_bearing(
-        gps["previous_longitude"],
-        gps["previous_latitude"],
-        gps["longitude"],
-        gps["latitude"]
-    )
-
-    # First observation has no previous point.
-    first_observation = gps["previous_timestamp"].isna()
-
-    gps.loc[
-        first_observation,
-        [
-            "time_delta_s",
-            "gps_displacement_m",
-            "gps_heading_deg"
-        ]
-    ] = np.nan
-
-    # Speed is undefined for non-positive time intervals.
-    valid_time = gps["time_delta_s"] > 0
-
-    gps["implied_speed_mps"] = np.where(
-        valid_time,
-        gps["gps_displacement_m"] / gps["time_delta_s"],
-        np.nan
-    )
+        valid_time = gps["time_delta_s"] > 0
+        gps["implied_speed_mps"] = np.where(
+            valid_time, gps["gps_displacement_m"] / gps["time_delta_s"], np.nan
+        )
 
     return gps[
         [
@@ -359,43 +347,18 @@ def calculate_graph_features(candidates, road_graph=None):
 
         return road_graph.degree(node)
 
-    for index, row in result.iterrows():
-
-        source = row["from_node_id"]
-        target = row["to_node_id"]
-
-        source_degree = get_degree(source, "in")
-        target_degree = get_degree(target, "in")
-
-        result.at[index, "from_node_degree"] = (
-            road_graph.degree(source)
-            if source in road_graph else np.nan
-        )
-
-        result.at[index, "to_node_degree"] = (
-            road_graph.degree(target)
-            if target in road_graph else np.nan
-        )
-
-        result.at[index, "from_node_in_degree"] = (
-            source_degree if road_graph.is_directed()
-            else np.nan
-        )
-
-        result.at[index, "from_node_out_degree"] = (
-            get_degree(source, "out")
-            if road_graph.is_directed() else np.nan
-        )
-
-        result.at[index, "to_node_in_degree"] = (
-            target_degree if road_graph.is_directed()
-            else np.nan
-        )
-
-        result.at[index, "to_node_out_degree"] = (
-            get_degree(target, "out")
-            if road_graph.is_directed() else np.nan
-        )
+    source = result["from_node_id"].to_numpy()
+    target = result["to_node_id"].to_numpy()
+    degree = dict(road_graph.degree())
+    result["from_node_degree"] = pd.Series(source).map(degree).to_numpy()
+    result["to_node_degree"] = pd.Series(target).map(degree).to_numpy()
+    if road_graph.is_directed():
+        in_degree = dict(road_graph.in_degree())
+        out_degree = dict(road_graph.out_degree())
+        result["from_node_in_degree"] = pd.Series(source).map(in_degree).to_numpy()
+        result["from_node_out_degree"] = pd.Series(source).map(out_degree).to_numpy()
+        result["to_node_in_degree"] = pd.Series(target).map(in_degree).to_numpy()
+        result["to_node_out_degree"] = pd.Series(target).map(out_degree).to_numpy()
 
     return result
 
@@ -453,12 +416,13 @@ def extract_features(
     )
 
     # Calculate candidate distance ranking.
-    features["candidate_rank"] = (
-        features.groupby("observation_id")[
-            "distance_to_segment_m"
-        ]
-        .rank(method="dense", ascending=True)
-    )
+    if "distance_rank" in features.columns:
+        features["candidate_rank"] = pd.to_numeric(features["distance_rank"], errors="coerce")
+    else:
+        features["candidate_rank"] = (
+            features.groupby("observation_id")["distance_to_segment_m"]
+            .rank(method="dense", ascending=True)
+        )
 
     # Calculate heading difference.
     features["heading_difference_deg"] = (
