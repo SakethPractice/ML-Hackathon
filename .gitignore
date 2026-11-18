@@ -9,6 +9,7 @@ data/raw/
 *.egg-info/
 data/*.zip
 artifacts/models/*.joblib
+!artifacts/models/logistic_regression.joblib
 artifacts/models/*.pkl
 artifacts/preprocessing/*.joblib
 !artifacts/.gitkeep
