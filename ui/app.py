@@ -9,7 +9,7 @@ import streamlit as st
 from streamlit_folium import st_folium
 
 from config import get_api_base_url
-from map_adapter import create_route_map
+from map_adapter import create_route_map, parse_prediction_coordinates
 
 
 st.set_page_config(page_title="PathSnap | Evaluator", page_icon="🧭", layout="wide")
@@ -93,9 +93,16 @@ def parse_trip_ids(payload: Any) -> list[str]:
     return ids
 
 
-def display_route_map(coordinates: list[list[float]]) -> None:
-    """Render explicitly supplied route points; response mapping awaits API contract."""
-    st_folium(create_route_map(coordinates), use_container_width=True, height=480)
+def display_route_map(
+    observations: list[tuple[float, float]],
+    predicted_route: list[tuple[float, float]],
+) -> None:
+    """Render validated coordinates from the actual prediction response."""
+    st_folium(
+        create_route_map(observations, predicted_route),
+        use_container_width=True,
+        height=480,
+    )
 
 
 api_base_url = get_api_base_url()
@@ -180,8 +187,17 @@ with map_col.container(border=True):
     if prediction is None:
         st.info("A map will be available after a prediction response and a defined route format.")
     else:
-        st.info(
-            "The API prediction response is shown above. Map rendering is ready in the separate "
-            "adapter; the backend must define how route coordinates are represented before the UI "
-            "can safely connect that response to the map."
-        )
+        try:
+            observations, predicted_route = parse_prediction_coordinates(prediction)
+        except ValueError as exc:
+            st.warning(f"Map unavailable: {exc}")
+        else:
+            if not predicted_route:
+                st.info(
+                    "No valid predicted route coordinates were returned. "
+                    "The map is shown only when the API provides route coordinates."
+                )
+            else:
+                if not observations:
+                    st.caption("No GPS observations were returned; showing the predicted route only.")
+                display_route_map(observations, predicted_route)
