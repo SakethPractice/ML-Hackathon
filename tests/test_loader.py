@@ -3,10 +3,13 @@
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
 import pytest
 
+from pathsnap.data.preprocessing import TrackContextConfig, track_context
 from pathsnap.data.loader import list_trips, load_trip, read_arcs, read_track
 from pathsnap.data.validation import validate_route, validate_track, validate_trip
+from pathsnap.graph.geo import LocalProjection
 
 
 def _write_trip(root: Path, partition: str, trip_id: str, route=True, track_text=None):
@@ -94,3 +97,23 @@ def test_validate_trip_flags_bad_node_reference(tmp_path):
     (d / "00000001.arcs").write_text("0\t1\n1\t7\n")
     rep = validate_trip(load_trip("train", "00000001", data_root=tmp_path))
     assert rep["n_arcs_invalid_node_ref"] == 1
+
+
+def test_track_context_gaps_heading_and_stationary():
+    proj = LocalProjection(8.0, 49.0)
+    # 20 fixes moving east at 10 m/s, then 40 s gap, then 20 fixes standing still
+    xy = np.vstack([np.column_stack([np.arange(20) * 10.0, np.zeros(20)]),
+                    np.tile([[500.0, 0.0]], (20, 1))])
+    ts = np.r_[np.arange(20), 59 + np.arange(20)].astype(float)
+    lonlat = proj.to_lonlat(xy)
+    track = pd.DataFrame({"lon": lonlat[:, 0], "lat": lonlat[:, 1], "timestamp": ts})
+    ctx = track_context(track, proj, TrackContextConfig(gap_s=30, stationary_window=5, stationary_disp_m=20))
+
+    assert np.isnan(ctx.loc[0, "dt_prev_s"])
+    assert ctx.loc[5, "speed_prev_mps"] == pytest.approx(10.0, rel=1e-3)
+    assert ctx.loc[5, "heading_deg"] == pytest.approx(90.0, abs=0.1)  # east
+    assert ctx["gap_before"].sum() == 1 and bool(ctx.loc[20, "gap_before"])
+    assert ctx["segment_id"].tolist() == [0] * 20 + [1] * 20
+    assert not ctx.loc[10, "is_stationary"]
+    assert ctx.loc[30, "is_stationary"]
+    assert np.isnan(ctx.loc[30, "heading_deg"])
