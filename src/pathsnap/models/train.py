@@ -15,8 +15,13 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import ExtraTreesClassifier, RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.neural_network import MLPClassifier
+
+try:
+    from lightgbm import LGBMClassifier
+except ImportError:  # pragma: no cover - exercised by the experiment runner
+    LGBMClassifier = None
 
 
 DEFAULT_FEATURE_COLUMNS = [
@@ -95,7 +100,13 @@ def build_training_table(prepared_trips: Iterable) -> pd.DataFrame:
 
 
 def make_model_definitions(random_seed: int = 42) -> dict[str, object]:
-    """Return five distinct baseline models."""
+    """Return the project's five approved candidate classifiers.
+
+    Pipelines contain every learned preprocessing step, so cross-validation
+    can fit it strictly on each training fold.
+    """
+    if LGBMClassifier is None:
+        raise ImportError("lightgbm is required for the approved model shortlist")
     linear = Pipeline([
         ("imputer", SimpleImputer(strategy="median")),
         ("scaler", StandardScaler()),
@@ -104,26 +115,43 @@ def make_model_definitions(random_seed: int = 42) -> dict[str, object]:
     knn = Pipeline([
         ("imputer", SimpleImputer(strategy="median")),
         ("scaler", StandardScaler()),
-        ("model", KNeighborsClassifier(n_neighbors=7, weights="distance")),
-    ])
-    tree = Pipeline([
-        ("imputer", SimpleImputer(strategy="median")),
-        ("model", DecisionTreeClassifier(max_depth=12, random_state=random_seed)),
+        # KD-tree avoids the otherwise quadratic brute-force query cost for
+        # the 1.4M-row candidate table used by the experiment runner.
+        ("model", KNeighborsClassifier(
+            n_neighbors=7, weights="distance", algorithm="kd_tree",
+            leaf_size=100, n_jobs=-1,
+        )),
     ])
     forest = Pipeline([
         ("imputer", SimpleImputer(strategy="median")),
-        ("model", RandomForestClassifier(n_estimators=300, max_depth=None, n_jobs=-1, random_state=random_seed)),
+        ("model", RandomForestClassifier(
+            n_estimators=300, max_depth=None, class_weight="balanced",
+            n_jobs=-1, random_state=random_seed,
+        )),
     ])
-    extra = Pipeline([
+    lightgbm = Pipeline([
         ("imputer", SimpleImputer(strategy="median")),
-        ("model", ExtraTreesClassifier(n_estimators=300, max_depth=None, n_jobs=-1, random_state=random_seed)),
+        ("model", LGBMClassifier(
+            n_estimators=300, learning_rate=0.05, num_leaves=31,
+            class_weight="balanced", n_jobs=-1, random_state=random_seed,
+            verbosity=-1,
+        )),
+    ])
+    mlp = Pipeline([
+        ("imputer", SimpleImputer(strategy="median")),
+        ("scaler", StandardScaler()),
+        ("model", MLPClassifier(
+            hidden_layer_sizes=(64, 32), activation="relu", solver="adam",
+            batch_size=1024, early_stopping=True, max_iter=150,
+            random_state=random_seed,
+        )),
     ])
     return {
         "logistic_regression": linear,
         "knn": knn,
-        "decision_tree": tree,
         "random_forest": forest,
-        "extra_trees": extra,
+        "lightgbm": lightgbm,
+        "mlp": mlp,
     }
 
 

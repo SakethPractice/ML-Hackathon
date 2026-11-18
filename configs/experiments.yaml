@@ -7,12 +7,17 @@ models:
   knn:
     n_neighbors: 7
     weights: distance
-  decision_tree:
-    max_depth: 12
+    algorithm: kd_tree
+    leaf_size: 100
   random_forest:
     n_estimators: 300
     max_depth: null
-  extra_trees:
+  lightgbm:
     n_estimators: 300
-    max_depth: null
+    learning_rate: 0.05
+    num_leaves: 31
+  mlp:
+    hidden_layer_sizes: [64, 32]
+    batch_size: 1024
+    max_iter: 150
 

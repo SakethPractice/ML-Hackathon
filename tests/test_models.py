@@ -14,9 +14,9 @@ def test_model_definitions_cover_five_families():
     assert set(models) == {
         "logistic_regression",
         "knn",
-        "decision_tree",
         "random_forest",
-        "extra_trees",
+        "lightgbm",
+        "mlp",
     }
 
 
