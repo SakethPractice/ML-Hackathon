@@ -15,3 +15,4 @@ artifacts/preprocessing/*.joblib
 
 data/processed/*
 !data/processed/.gitkeep
+*.egg-info/
