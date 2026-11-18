@@ -1,0 +1,36 @@
+{
+  "experiment_id": "five_model_baseline_v1",
+  "selection_rule": "highest GroupKFold CV observation Top-1 accuracy; ties use CV Macro F1 then lower CV log loss",
+  "selected_model": "logistic_regression",
+  "feature_columns": [
+    "distance_to_segment_m",
+    "segment_length_m",
+    "segment_bearing_deg",
+    "time_delta_s",
+    "gps_displacement_m",
+    "gps_heading_deg",
+    "implied_speed_mps",
+    "candidate_rank",
+    "heading_difference_deg",
+    "from_node_degree",
+    "to_node_degree",
+    "from_node_in_degree",
+    "from_node_out_degree",
+    "to_node_in_degree",
+    "to_node_out_degree"
+  ],
+  "class_convention": {
+    "0": "non-reference candidate",
+    "1": "reference candidate"
+  },
+  "training_partition": "train",
+  "student_evaluation_partition": "student_test",
+  "training_trip_count": 80,
+  "student_test_trip_count": 10,
+  "cv": "GroupKFold(n_splits=5, groups=trip_id)",
+  "random_seed": 42,
+  "knn_fit_sampling": "deterministic class-stratified sample of at most 5,000 training candidate rows; all validation and student-test candidates are scored",
+  "python": "3.12.10",
+  "scikit_learn": "1.9.1",
+  "lightgbm": "4.7.0"
+}
