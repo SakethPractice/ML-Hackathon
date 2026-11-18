@@ -66,6 +66,8 @@ def create_route_map(
     predicted_route: Sequence[Sequence[float]] | None = None,
     *,
     zoom_start: int = 13,
+    observations_label: str = "Original GPS observations",
+    predicted_route_label: str = "Predicted route",
 ) -> folium.Map:
     """Create a map with independently toggleable GPS and prediction layers."""
     gps_points = _validated_coordinates(observations, "observations")
@@ -77,11 +79,11 @@ def create_route_map(
     map_view = folium.Map(location=all_points[0], zoom_start=zoom_start, control_scale=True)
 
     if gps_points:
-        gps_layer = folium.FeatureGroup(name="Original GPS observations", show=True)
+        gps_layer = folium.FeatureGroup(name=observations_label, show=True)
         if len(gps_points) > 1:
             folium.PolyLine(
                 gps_points, color="#2563eb", weight=4, opacity=0.85,
-                tooltip="Original GPS observations",
+                tooltip=observations_label,
             ).add_to(gps_layer)
         for point in gps_points:
             folium.CircleMarker(
@@ -91,11 +93,11 @@ def create_route_map(
         gps_layer.add_to(map_view)
 
     if route_points:
-        route_layer = folium.FeatureGroup(name="Predicted route", show=True)
+        route_layer = folium.FeatureGroup(name=predicted_route_label, show=True)
         if len(route_points) > 1:
             folium.PolyLine(
                 route_points, color="#16803c", weight=5, opacity=0.95,
-                tooltip="Predicted route",
+                tooltip=predicted_route_label,
             ).add_to(route_layer)
         folium.Marker(
             route_points[0], tooltip="Predicted route start",
