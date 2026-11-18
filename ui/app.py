@@ -12,6 +12,21 @@ from config import get_api_base_url
 from map_adapter import create_route_map, parse_prediction_coordinates
 
 
+# Illustrative UI-only points for checking map layers; never sent to the API.
+SAMPLE_MAP_OBSERVATIONS = [
+    (37.7739, -122.4312),
+    (37.7750, -122.4284),
+    (37.7761, -122.4257),
+    (37.7774, -122.4229),
+]
+SAMPLE_MAP_ROUTE = [
+    (37.7739, -122.4312),
+    (37.7748, -122.4288),
+    (37.7760, -122.4260),
+    (37.7774, -122.4229),
+]
+
+
 st.set_page_config(page_title="PathSnap | Evaluator", page_icon="🧭", layout="wide")
 
 st.markdown(
@@ -96,10 +111,18 @@ def parse_trip_ids(payload: Any) -> list[str]:
 def display_route_map(
     observations: list[tuple[float, float]],
     predicted_route: list[tuple[float, float]],
+    *,
+    observations_label: str = "Original GPS observations",
+    predicted_route_label: str = "Predicted route",
 ) -> None:
     """Render validated coordinates from the actual prediction response."""
     st_folium(
-        create_route_map(observations, predicted_route),
+        create_route_map(
+            observations,
+            predicted_route,
+            observations_label=observations_label,
+            predicted_route_label=predicted_route_label,
+        ),
         use_container_width=True,
         height=480,
     )
@@ -155,6 +178,21 @@ with st.container(border=True):
         "Run prediction", type="primary", disabled=not bool(trip_ids),
         use_container_width=True,
     )
+
+with st.container(border=True):
+    st.subheader("Map preview")
+    show_sample_preview = st.checkbox("Show sample map preview")
+    if show_sample_preview:
+        st.caption(
+            "UI-only sample preview. These illustrative coordinates are not GPS observations "
+            "from a trip and are not model predictions. They are never sent to the backend."
+        )
+        display_route_map(
+            SAMPLE_MAP_OBSERVATIONS,
+            SAMPLE_MAP_ROUTE,
+            observations_label="Sample GPS observations (preview)",
+            predicted_route_label="Sample predicted route (preview)",
+        )
 
 if run_prediction and selected_trip_id:
     with st.spinner(f"Requesting prediction for trip {selected_trip_id}…"):
