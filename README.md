@@ -95,29 +95,16 @@ The final model will be chosen **only after real experiments**. The decoder will
 
 | Member | Responsibility |
 |:--|:--|
-| **M1 · Data & Graph** | Data loading, EDA, directed graph, candidate generation |
-| **M2 · Machine Learning** | Reference alignment, features, five-model comparison |
-| **M3 · Route Intelligence** | Bayesian optimisation, HMM, Viterbi, route evaluation |
-| **M4 · Product & Deployment** | FastAPI, Folium UI, integration, two-laptop demonstration |
+| **Vrinda** | Data loading, EDA, directed graph, candidate generation |
+| **Saketh** | Reference alignment, features, five-model comparison |
+| **Vivek** | Bayesian optimisation, HMM, Viterbi, route evaluation |
+| **Vismaya** | FastAPI, Folium UI, integration, two-laptop demonstration |
 
 ## 🧩 Planned technology stack
 
 `Python` · `NumPy` · `pandas` · `scikit-learn` · `LightGBM` · `Optuna` · `NetworkX` · `Shapely` · `FastAPI` · `Folium` · `pytest`
 
 The exact dependency list may change as the team integrates its modules.
-
-## 🚧 Development status
-
-This repository is under active development. The README is a **temporary visual overview**, not a claim that the full system is complete.
-
-- [ ] Data validation, reference alignment and candidate generation integrated
-- [ ] Five classifiers trained and compared on permitted data
-- [ ] Bayesian optimisation results recorded
-- [ ] HMM/Viterbi integrated with real candidate scores
-- [ ] Classifier-only vs decoder evaluation completed
-- [ ] Interactive route visualisation connected to FastAPI
-- [ ] Two-laptop demonstration verified
-- [ ] Reproducible experiments and final technical report published
 
 ### Getting started
 
@@ -169,9 +156,6 @@ python -m uvicorn pathsnap.api.main:app --host 0.0.0.0 --port 8000
 `observation_status`, `expanded_route_arc_ids`, `route_segments`,
 `route_geometry`, `gap_boundaries`, `diagnostics`, and `runtime_seconds`.
 
-## 📊 Evaluation goals
-
-We intend to report **candidate-level Macro F1 and log loss**, **observation-level Top-1 accuracy and candidate miss rate**, and **route continuity, sequence performance and runtime**. All published scores and figures will come from reproducible experiments—no placeholder metrics.
 
 ---
 
@@ -179,6 +163,6 @@ We intend to report **candidate-level Macro F1 and log loss**, **observation-lev
 
 **PathSnap** · *Find the road behind the GPS noise.*
 
-<sub>Machine Learning project · Temporary README · Work in progress</sub>
+<sub>Machine Learning project</sub>
 
 </div>
