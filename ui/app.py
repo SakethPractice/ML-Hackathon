@@ -80,10 +80,28 @@ def request_json(method: str, url: str, *, timeout: float = 8, **kwargs: Any) ->
     """Send an API request and return valid JSON, raising readable errors otherwise."""
     try:
         response = requests.request(method, url, timeout=timeout, **kwargs)
+    except requests.Timeout as exc:
+        raise RuntimeError(f"The backend request timed out after {timeout:g} seconds.") from exc
+    except requests.ConnectionError as exc:
+        raise RuntimeError(
+            "Could not connect to the backend. Check that it is running and that the API URL is correct."
+        ) from exc
     except requests.RequestException as exc:
-        raise RuntimeError(f"Could not reach the backend: {exc}") from exc
+        raise RuntimeError(f"The backend request failed: {exc}") from exc
     if not response.ok:
         detail = response.text.strip() or "No error detail returned."
+        if response.status_code == 404:
+            detail = f"The requested API resource or trip was not found. {detail}"
+        elif response.status_code == 503 and url.rstrip("/").endswith("/trips"):
+            detail = (
+                "Evaluator trip data is unavailable. Configure or restore the evaluator "
+                f"dataset, then refresh trips. {detail}"
+            )
+        elif response.status_code == 503:
+            detail = (
+                "The prediction service is unavailable, possibly because required evaluator "
+                f"data or the decoder is unavailable. {detail}"
+            )
         raise RuntimeError(f"Backend returned HTTP {response.status_code}: {detail[:500]}")
     try:
         return response.json()
@@ -223,7 +241,7 @@ with result_col.container(border=True):
 with map_col.container(border=True):
     st.subheader("Route map")
     if prediction is None:
-        st.info("A map will be available after a prediction response and a defined route format.")
+        st.info("A map will be available after the backend returns route geometry.")
     else:
         try:
             observations, predicted_route = parse_prediction_coordinates(prediction)
@@ -237,5 +255,8 @@ with map_col.container(border=True):
                 )
             else:
                 if not observations:
-                    st.caption("No GPS observations were returned; showing the predicted route only.")
+                    st.caption(
+                        "GPS observations are unavailable in this response; "
+                        "showing the predicted route only."
+                    )
                 display_route_map(observations, predicted_route)

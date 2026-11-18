@@ -1,9 +1,4 @@
-"""Adapt prediction JSON into a Folium map without changing the ML pipeline.
-
-The provisional API fields are ``observations`` and ``predicted_route``. Both
-contain WGS84 ``[latitude, longitude]`` pairs. Keep this response parsing here
-so it can be updated independently if the backend contract changes.
-"""
+"""Adapt the FastAPI prediction response into a Folium map."""
 
 from collections.abc import Sequence
 import math
@@ -50,20 +45,27 @@ def _validated_coordinates(value: Any, field_name: str) -> list[Coordinate]:
 
 def parse_prediction_coordinates(
     prediction: Any,
-) -> tuple[list[Coordinate], list[Coordinate]]:
-    """Read and validate the provisional coordinate fields from an API response."""
+) -> tuple[list[Coordinate], list[list[Coordinate]]]:
+    """Read optional GPS observations and segmented ``route_geometry``."""
     if not isinstance(prediction, dict):
         raise ValueError("Prediction response must be a JSON object to display a route map.")
     observations = _validated_coordinates(prediction.get("observations"), "observations")
-    predicted_route = _validated_coordinates(
-        prediction.get("predicted_route"), "predicted_route"
-    )
-    return observations, predicted_route
+    raw_segments = prediction.get("route_geometry")
+    if raw_segments is None:
+        raw_segments = []
+    if not isinstance(raw_segments, Sequence) or isinstance(raw_segments, (str, bytes)):
+        raise ValueError("'route_geometry' must be an array of coordinate segments.")
+    predicted_segments: list[list[Coordinate]] = []
+    for index, segment in enumerate(raw_segments):
+        points = _validated_coordinates(segment, f"route_geometry[{index}]")
+        if points:
+            predicted_segments.append(points)
+    return observations, predicted_segments
 
 
 def create_route_map(
     observations: Sequence[Sequence[float]] | None = None,
-    predicted_route: Sequence[Sequence[float]] | None = None,
+    predicted_route: Sequence[Any] | None = None,
     *,
     zoom_start: int = 13,
     observations_label: str = "Original GPS observations",
@@ -71,7 +73,16 @@ def create_route_map(
 ) -> folium.Map:
     """Create a map with independently toggleable GPS and prediction layers."""
     gps_points = _validated_coordinates(observations, "observations")
-    route_points = _validated_coordinates(predicted_route, "predicted_route")
+    route_values = list(predicted_route or [])
+    if route_values and isinstance(route_values[0], Sequence) and route_values[0] and isinstance(route_values[0][0], Sequence):
+        route_segments = [
+            _validated_coordinates(segment, f"predicted_route[{index}]")
+            for index, segment in enumerate(route_values)
+        ]
+    else:
+        route_segments = [_validated_coordinates(route_values, "predicted_route")] if route_values else []
+    route_segments = [segment for segment in route_segments if segment]
+    route_points = [point for segment in route_segments for point in segment]
     if not gps_points and not route_points:
         raise ValueError("No valid GPS observations or predicted route coordinates were returned.")
 
@@ -94,18 +105,20 @@ def create_route_map(
 
     if route_points:
         route_layer = folium.FeatureGroup(name=predicted_route_label, show=True)
-        if len(route_points) > 1:
-            folium.PolyLine(
-                route_points, color="#16803c", weight=5, opacity=0.95,
-                tooltip=predicted_route_label,
+        for segment in route_segments:
+            if len(segment) > 1:
+                folium.PolyLine(
+                    segment, color="#16803c", weight=5, opacity=0.95,
+                    tooltip=predicted_route_label,
+                ).add_to(route_layer)
+        if route_points:
+            folium.Marker(
+                route_segments[0][0], tooltip="Predicted route start",
+                icon=folium.Icon(color="green", icon="play"),
             ).add_to(route_layer)
-        folium.Marker(
-            route_points[0], tooltip="Predicted route start",
-            icon=folium.Icon(color="green", icon="play"),
-        ).add_to(route_layer)
         if len(route_points) > 1:
             folium.Marker(
-                route_points[-1], tooltip="Predicted route end",
+                route_segments[-1][-1], tooltip="Predicted route end",
                 icon=folium.Icon(color="darkgreen", icon="flag"),
             ).add_to(route_layer)
         route_layer.add_to(map_view)
