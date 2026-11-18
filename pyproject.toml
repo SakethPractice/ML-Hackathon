@@ -1,3 +1,4 @@
+
 [build-system]
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
@@ -5,8 +6,20 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "pathsnap"
 version = "0.1.0"
+description = "PathSnap ML Map Matching Project"
 requires-python = ">=3.10"
+dependencies = [
+    "numpy",
+    "pandas",
+    "scikit-learn",
+    "networkx",
+    "matplotlib",
+    "pytest"
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
-
+include = ["pathsnap*"]
