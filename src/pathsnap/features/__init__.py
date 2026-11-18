@@ -19,6 +19,9 @@ from .extract import (
     calculate_angle_difference,
     validate_inputs
 )
+from .analysis import descriptive_statistics, correlation_tables
+from .selection import variance_selected, correlation_selected, kbest_selected, permutation_selected
+from .validation import ablation_configs, model_definitions, observation_top1
 
 __all__ = [
     "extract_features",
