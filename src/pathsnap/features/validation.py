@@ -54,7 +54,10 @@ def model_definitions(seed: int = 42) -> dict[str, Pipeline]:
         "KNN": Pipeline([
             ("imputer", SimpleImputer(strategy="median")),
             ("scaler", StandardScaler()),
-            ("model", KNeighborsClassifier(n_neighbors=7, weights="distance", metric="minkowski")),
+            ("model", KNeighborsClassifier(
+                n_neighbors=7, weights="distance", metric="minkowski",
+                algorithm="kd_tree", leaf_size=100, n_jobs=-1,
+            )),
         ]),
         "Random Forest": Pipeline([
             ("imputer", SimpleImputer(strategy="median")),
@@ -65,7 +68,7 @@ def model_definitions(seed: int = 42) -> dict[str, Pipeline]:
             ("imputer", SimpleImputer(strategy="median")),
             ("scaler", StandardScaler()),
             ("model", MLPClassifier(hidden_layer_sizes=(64, 32), activation="relu",
-                                    solver="adam", early_stopping=True, max_iter=150,
+                                    solver="adam", batch_size=1024, early_stopping=True, max_iter=150,
                                     random_state=seed)),
         ]),
     }

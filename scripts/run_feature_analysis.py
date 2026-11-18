@@ -21,13 +21,20 @@ FIGURES = RESULTS / "figures"
 SEED = 42
 
 
-def build_training_data() -> tuple[pd.DataFrame, pd.Series, pd.Series, pd.DataFrame]:
-    base = ROOT / "data" / "processed" / "train"
+def build_labeled_data(partition: str) -> tuple[pd.DataFrame, pd.DataFrame, pd.Series]:
+    """Build labelled candidate rows for a permitted development partition.
+
+    Labels are merged only after inference-time features are extracted.  This
+    keeps the feature matrix free of route/reference information.
+    """
+    base = ROOT / "data" / "processed" / partition
+    if not base.is_dir():
+        raise FileNotFoundError(f"Processed partition not found: {base}")
     frames = []
     for trip_dir in sorted(p for p in base.iterdir() if p.is_dir()):
         trip_id = trip_dir.name
-        tables = load_processed("train", trip_id, ROOT / "data" / "processed", with_labels=True)
-        trip = load_trip("train", trip_id, data_root=ROOT / "data" / "raw")
+        tables = load_processed(partition, trip_id, ROOT / "data" / "processed", with_labels=True)
+        trip = load_trip(partition, trip_id, data_root=ROOT / "data" / "raw")
         graph = trip_graph = trip
         from pathsnap.graph.road_graph import RoadGraph
         graph = RoadGraph.from_trip(trip_graph).to_networkx()
@@ -49,6 +56,12 @@ def build_training_data() -> tuple[pd.DataFrame, pd.Series, pd.Series, pd.DataFr
     data = pd.concat(frames, ignore_index=True)
     X = get_feature_matrix(data)
     y = data["is_reference"].astype("int8")
+    return data, X, y
+
+
+def build_training_data() -> tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.DataFrame]:
+    """Backward-compatible training-data entry point for feature scripts."""
+    data, X, y = build_labeled_data("train")
     return data, X, y, data[["trip_id", "observation_id", "arc_id"]]
 
 
