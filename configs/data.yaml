@@ -1,0 +1,14 @@
+data_root: data/raw
+train_partition: train
+student_test_partition: student_test
+evaluator_test_partition: evaluator_test
+candidate_radius_metres: 150
+candidate_top_k: 8
+coordinate_order: lon_lat
+distance_method: haversine
+random_seed: 42
+partitions:
+  train: 80
+  student_test: 10
+  evaluator_test: null
+

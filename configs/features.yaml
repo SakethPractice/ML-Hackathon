@@ -1,0 +1,13 @@
+feature_version: 1
+feature_columns:
+  - point_segment_distance_m
+  - segment_length_m
+  - bearing_difference_deg
+  - distance_rank
+  - heading_change_deg
+  - time_delta_s
+  - gps_displacement_m
+  - implied_speed_mps
+  - candidate_degree
+missing_value_strategy: median
+

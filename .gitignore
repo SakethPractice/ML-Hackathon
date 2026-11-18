@@ -1,0 +1,15 @@
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.env
+*.log
+data/raw/
+data/*.zip
+artifacts/models/*.joblib
+artifacts/models/*.pkl
+artifacts/preprocessing/*.joblib
+!artifacts/.gitkeep
+!data/processed/.gitkeep
+

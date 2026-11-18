@@ -1,0 +1,18 @@
+random_seed: 42
+cv_folds: 5
+models:
+  logistic_regression:
+    C: 1.0
+    max_iter: 2000
+  knn:
+    n_neighbors: 7
+    weights: distance
+  decision_tree:
+    max_depth: 12
+  random_forest:
+    n_estimators: 300
+    max_depth: null
+  extra_trees:
+    n_estimators: 300
+    max_depth: null
+
