@@ -6,6 +6,7 @@ __pycache__/
 .env
 *.log
 data/raw/
+*.egg-info/
 data/*.zip
 artifacts/models/*.joblib
 artifacts/models/*.pkl
