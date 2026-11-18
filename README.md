@@ -142,6 +142,27 @@ Five-fold `GroupKFold` keeps every candidate row from a trip in the same fold.
 The generated outputs are written to `results/` and `results/figures/`;
 the reproducible selected subset is in `results/selected_features.json`.
 
+### Run the API and UI
+
+Laptop 1 (backend, serves the 10 student_test trips until evaluator data is supplied):
+
+```powershell
+python -m pip install -r requirements.txt
+python -m pip install -e .
+$env:PATHSNAP_MODE = "student"
+python -m uvicorn pathsnap.api.main:app --host 0.0.0.0 --port 8000
+```
+
+Laptop 2 (UI):
+
+```powershell
+python -m pip install -r requirements.txt
+$env:PATHSNAP_API_BASE_URL = "http://<Laptop-1-Wi-Fi-IP>:8000"
+streamlit run ui/app.py
+```
+
+Full two-laptop guide, API reference and troubleshooting: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+
 ## 📊 Evaluation goals
 
 We intend to report **candidate-level Macro F1 and log loss**, **observation-level Top-1 accuracy and candidate miss rate**, and **route continuity, sequence performance and runtime**. All published scores and figures will come from reproducible experiments—no placeholder metrics.
