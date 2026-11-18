@@ -110,6 +110,23 @@ class RoadGraph:
         rev = self.arc_to * n + self.arc_from
         return np.isin(rev, key)
 
+    def to_networkx(self):
+        """Directed NetworkX multigraph with the original node and arc IDs.
+
+        A MultiDiGraph is used so duplicate arcs (same from/to nodes) are kept
+        as separate edges, keyed by arc_id; node degrees then count every arc.
+        """
+        import networkx as nx
+
+        g = nx.MultiDiGraph()
+        g.add_nodes_from(range(self.n_nodes))
+        g.add_edges_from(
+            (int(u), int(v), int(a), {"length_m": float(L), "bearing_deg": float(b)})
+            for a, (u, v, L, b) in enumerate(zip(self.arc_from, self.arc_to,
+                                                 self.arc_length_m, self.arc_bearing_deg))
+        )
+        return g
+
     # ------------------------------------------------------------ connectivity
     def _adjacency(self) -> csr_matrix:
         n = self.n_nodes
