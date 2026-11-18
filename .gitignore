@@ -13,3 +13,5 @@ artifacts/preprocessing/*.joblib
 !artifacts/.gitkeep
 !data/processed/.gitkeep
 
+data/processed/*
+!data/processed/.gitkeep

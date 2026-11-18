@@ -6,8 +6,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from pathsnap.data.preprocessing import TrackContextConfig, track_context
 from pathsnap.data.loader import list_trips, load_trip, read_arcs, read_track
+from pathsnap.data.preprocessing import TrackContextConfig, track_context
 from pathsnap.data.validation import validate_route, validate_track, validate_trip
 from pathsnap.graph.geo import LocalProjection
 
