@@ -142,6 +142,33 @@ Five-fold `GroupKFold` keeps every candidate row from a trip in the same fold.
 The generated outputs are written to `results/` and `results/figures/`;
 the reproducible selected subset is in `results/selected_features.json`.
 
+### Prediction API
+
+`POST /predict` loads the selected model recorded in
+`artifacts/models/experiment_metadata.json`, prepares the requested raw
+evaluator trip with `with_labels=False`, extracts the same 15 features used in
+training, and scores each `(observation_id, arc_id)` candidate. The resulting
+`match_probability` values are adapted to the decoder's
+`(observation_idx, arc_id, match_probability)` input and passed to
+`decode_trip`. The API returns the decoder's `TripDecodeResult` schema.
+Reference `.route` files are not opened for prediction.
+
+The inference adapter is `pathsnap.api.inference.TrainedModelPredictor`.
+Its callable interface is `predictor(trip_id: str) -> TripDecodeResult`;
+`TrainedModelPredictor.from_artifacts(data_root, partition)` loads the selected
+artifact and API configuration. Run the server from the repository root:
+
+```powershell
+$env:PYTHONPATH = "src"
+python -m uvicorn pathsnap.api.main:app --host 0.0.0.0 --port 8000
+```
+
+`GET /trips` lists available evaluator IDs. `POST /predict` takes
+`{"trip_id":"00000067"}` and responds with the `TripDecodeResult` fields:
+`trip_id`, `status`, `observation_indices`, `matched_arc_ids`,
+`observation_status`, `expanded_route_arc_ids`, `route_segments`,
+`route_geometry`, `gap_boundaries`, `diagnostics`, and `runtime_seconds`.
+
 ## 📊 Evaluation goals
 
 We intend to report **candidate-level Macro F1 and log loss**, **observation-level Top-1 accuracy and candidate miss rate**, and **route continuity, sequence performance and runtime**. All published scores and figures will come from reproducible experiments—no placeholder metrics.

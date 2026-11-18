@@ -7,11 +7,13 @@ from typing import AsyncIterator
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 
+from .inference import TrainedModelPredictor
 from .schemas import PredictRequest, PredictionResponse, TripListResponse
 from .service import (
     EvaluatorTripsUnavailable,
     PredictionService,
     PredictionUnavailable,
+    _load_data_settings,
     list_evaluator_trip_ids,
 )
 
@@ -37,7 +39,10 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan,
 )
-app.state.prediction_service = PredictionService()
+_data_root, _evaluator_partition = _load_data_settings()
+app.state.prediction_service = PredictionService(
+    TrainedModelPredictor.from_artifacts(_data_root, _evaluator_partition)
+)
 
 
 def get_prediction_service(request: Request) -> PredictionService:
