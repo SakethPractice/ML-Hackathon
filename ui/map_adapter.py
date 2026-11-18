@@ -96,7 +96,9 @@ def create_route_map(
                 gps_points, color="#2563eb", weight=4, opacity=0.85,
                 tooltip=observations_label,
             ).add_to(gps_layer)
-        for point in gps_points:
+        # the line already shows the whole track; dots are thinned for speed
+        step = max(1, len(gps_points) // 400)
+        for point in gps_points[::step]:
             folium.CircleMarker(
                 point, radius=3, color="#2563eb", fill=True, fill_color="#2563eb",
                 fill_opacity=0.85,
@@ -123,6 +125,13 @@ def create_route_map(
             ).add_to(route_layer)
         route_layer.add_to(map_view)
 
+    legend = (
+        "<div style='position:fixed;top:12px;left:56px;z-index:9999;background:#fff;"
+        "border:1px solid #d1d5db;border-radius:8px;padding:8px 12px;font:13px sans-serif;'>"
+        f"<div><span style='color:#2563eb'>&#9679;</span> {observations_label}</div>"
+        f"<div><span style='color:#16803c'>&#9644;</span> {predicted_route_label}</div></div>"
+    )
+    map_view.get_root().html.add_child(folium.Element(legend))
     folium.LayerControl(collapsed=False).add_to(map_view)
     if len(all_points) > 1:
         map_view.fit_bounds(all_points)
