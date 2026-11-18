@@ -109,3 +109,34 @@ def test_alignment_is_monotone_and_handles_loops():
     assert al["route_pos"].tolist() == np.repeat(np.arange(8), 5).tolist()
     assert al["ref_arc_id"].tolist() == np.repeat(route, 5).tolist()
     assert al["align_dist_m"].to_numpy() == pytest.approx(2.0)
+
+
+def test_prepare_trip_without_labels_never_reads_route(tmp_path, monkeypatch):
+    import pathsnap.data.loader as loader
+    from pathsnap.candidates.pipeline import DataConfig, prepare_trip
+
+    d = tmp_path / "student_test" / "00000001"
+    d.mkdir(parents=True)
+    proj = LocalProjection(8.0, 49.0)
+    nodes = proj.to_lonlat(np.array([[0.0, 0.0], [500.0, 0.0]]))
+    (d / "00000001.nodes").write_text("\n".join(f"{x:.7f} {y:.7f}" for x, y in nodes) + "\n")
+    (d / "00000001.arcs").write_text("0 1\n1 0\n")
+    track = proj.to_lonlat(np.array([[100.0, 5.0], [200.0, 5.0], [300.0, 5.0]]))
+    (d / "00000001.track").write_text("\n".join(f"{x:.7f} {y:.7f} {i + 1}" for i, (x, y) in enumerate(track)) + "\n")
+    (d / "00000001.route").write_text("0\n")
+
+    def boom(*a, **k):
+        raise AssertionError("route was read")
+
+    monkeypatch.setattr(loader, "read_route", boom)
+    pt = prepare_trip("student_test", "00000001", DataConfig(data_root=str(tmp_path)))
+    assert pt.labels is None and pt.trip.route is None
+    assert set(pt.candidates.table["arc_id"]) == {0, 1}
+    assert len(pt.context) == 3
+
+
+def test_load_data_config_reads_repo_config():
+    from pathsnap.candidates.pipeline import load_data_config
+
+    cfg = load_data_config()
+    assert cfg.candidates.radius_m > 0 and cfg.candidates.top_k > 0
