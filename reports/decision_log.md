@@ -58,3 +58,19 @@
   i+15 is under 30 m.
 - Note: uses future fixes inside the same trip. That is available at
   inference because the API processes a whole trip at once.
+
+## D6 - Processed tables exported per trip, not committed
+- Date: 2026-11-18
+- Owner: Member 1
+- Problem observed: processing only existed in memory (`prepare_trip`).
+  Feature extraction expects ready-made GPS and candidate tables with its
+  own column names.
+- Chosen approach: `scripts/export_processed.py` writes per-trip gzip CSVs
+  to `data/processed/` in the `extract_features` input format. Labels go in
+  separate files, written for train and student_test only.
+- Evidence: a unit test runs `extract_features` on exported tables. On
+  train 00000095 all 15 feature columns are produced. Totals: 208,417 fixes
+  and 1,428,465 candidate rows (train); 19,160 and 147,060 (student_test).
+- Not committed: the files total about 58 MB and contain the raw GPS
+  coordinates, which are not committed either. The script regenerates
+  them in about 4 minutes; `results/processed_manifest.csv` is committed.
