@@ -2,13 +2,36 @@ data_root: data/raw
 train_partition: train
 student_test_partition: student_test
 evaluator_test_partition: evaluator_test
-candidate_radius_metres: 150
-candidate_top_k: 8
 coordinate_order: lon_lat
-distance_method: haversine
 random_seed: 42
 partitions:
   train: 80
   student_test: 10
-  evaluator_test: null
+  evaluator_test: null   # official count is 10; not supplied yet
 
+# Geometry. Lengths and GPS steps use haversine; point-to-segment geometry uses
+# a per-trip local equirectangular projection (error vs haversine is
+# measured in results/projection_check.csv).
+distance_method: haversine
+projection: local_equirectangular
+
+# Candidate generation. Chosen from scripts/candidate_sweep.py on the 80
+# training trips only (results/candidate_sweep.csv): at 50 m / top-12 the
+# miss rate over valid labels is 0.57% with 6.45 candidates per observation.
+candidate_radius_metres: 50
+candidate_top_k: 12
+candidate_fallback_factor: 2.0
+candidate_max_radius_metres: 400
+candidate_index_step_metres: 25
+
+# Reference labels: an observation's aligned route arc is a valid label only
+# if the fix is within this distance of it (bimodal alignment distances, see
+# reports/data_quality_log.md).
+max_label_dist_metres: 50
+
+# GPS context (src/pathsnap/data/preprocessing.py)
+gap_seconds: 30
+heading_lag: 2
+min_heading_disp_metres: 3
+stationary_window: 15
+stationary_disp_metres: 30

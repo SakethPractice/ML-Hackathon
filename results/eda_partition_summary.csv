@@ -1,0 +1,4 @@
+partition,trips,obs_total,obs_median,obs_min,obs_max,duration_h_total,gps_path_km_total,share_dt_eq_1s_mean,trips_with_gap_gt_30s,nodes_median,arcs_median,route_len_median,trips_with_route_break,share_stationary_mean
+student_test,10,19160,1420,262,3958,5.625,296.968,0.98199,2,6596.5,13145,250,1,0.066992
+train,80,208417,1529,361,19313,126.231,2978.42,0.938334,28,9608,19526.5,280,10,0.0911525
+evaluator_test (not supplied),,,,,,,,,,,,,,
