@@ -71,9 +71,9 @@ feats = extract_features(t["gps_observations"], t["candidate_segments"])
 For node-degree features, pass `RoadGraph.from_trip(trip).to_networkx()` as
 the graph, one trip at a time, because node IDs are local to each trip.
 
-The files (about 58 MB) are git-ignored because they repeat the raw GPS
-coordinates. Regenerate them with the script. Per-trip row counts are in
-`results/processed_manifest.csv`.
+The files (about 58 MB, 360 files) are committed so teammates can use them
+without re-running the pipeline. Re-running the script regenerates them.
+Per-trip row counts are in `results/processed_manifest.csv`.
 
 ## Scripts
 
@@ -82,6 +82,6 @@ coordinates. Regenerate them with the script. Per-trip row counts are in
 | `scripts/run_eda.py` | `results/dataset_inventory.csv`, `data_quality.csv`, `missing_values.csv`, `projection_check.csv`, `eda_partition_summary.csv`, `results/figures/eda_*.png`, `maps/html/eda_*.html` |
 | `scripts/candidate_sweep.py` | `results/candidate_sweep*.csv` (train only) |
 | `scripts/candidate_report.py` | `results/candidate_miss_rate*.csv` (train + student_test) |
-| `scripts/export_processed.py` | `data/processed/...` (git-ignored), `results/processed_manifest.csv` |
+| `scripts/export_processed.py` | `data/processed/...`, `results/processed_manifest.csv` |
 
 Findings and decisions: `reports/data_quality_log.md`, `reports/decision_log.md`.

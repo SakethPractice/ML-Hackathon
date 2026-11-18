@@ -59,7 +59,7 @@
 - Note: uses future fixes inside the same trip. That is available at
   inference because the API processes a whole trip at once.
 
-## D6 - Processed tables exported per trip, not committed
+## D6 - Processed tables exported per trip
 - Date: 2026-11-18
 - Owner: Member 1
 - Problem observed: processing only existed in memory (`prepare_trip`).
@@ -71,6 +71,6 @@
 - Evidence: a unit test runs `extract_features` on exported tables. On
   train 00000095 all 15 feature columns are produced. Totals: 208,417 fixes
   and 1,428,465 candidate rows (train); 19,160 and 147,060 (student_test).
-- Not committed: the files total about 58 MB and contain the raw GPS
-  coordinates, which are not committed either. The script regenerates
-  them in about 4 minutes; `results/processed_manifest.csv` is committed.
+- Storage: first kept out of git (about 58 MB), then committed on
+  2026-11-18 so the team can use them directly. Each file is under 5 MB.
+  The script regenerates them in about 4 minutes.
