@@ -1,0 +1,29 @@
+{
+  "partition": "train",
+  "trip_count": 80,
+  "observation_count": 185141,
+  "candidate_count": 1312143,
+  "class_0_count": 1128055,
+  "class_1_count": 184088,
+  "missing_values": 59263,
+  "feature_count": 15,
+  "feature_names": [
+    "distance_to_segment_m",
+    "segment_length_m",
+    "segment_bearing_deg",
+    "time_delta_s",
+    "gps_displacement_m",
+    "gps_heading_deg",
+    "implied_speed_mps",
+    "candidate_rank",
+    "heading_difference_deg",
+    "from_node_degree",
+    "to_node_degree",
+    "from_node_in_degree",
+    "from_node_out_degree",
+    "to_node_in_degree",
+    "to_node_out_degree"
+  ],
+  "cv_folds": 5,
+  "group_column": "trip_id"
+}
